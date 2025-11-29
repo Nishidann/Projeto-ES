@@ -1,81 +1,112 @@
 "use client";
 
 import { useState } from "react";
-import AuthCard from "../componentes/AuthCard";
 
-export default function Login() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
-    setErro("");
+    setCarregando(true);
 
     try {
-      const resposta = await fetch("http://localhost:8000/api/login/", {
+      const res = await fetch("http://localhost:8000/api/usuarios/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha })
+        body: JSON.stringify({ email, senha }),
       });
 
-      const dados = await resposta.json();
+      const data = await res.json();
 
-      if (!resposta.ok) {
-        setErro(dados.erro || "Credenciais inválidas");
+      if (!res.ok || data.erro) {
+        alert(data.erro || "Erro ao fazer login");
+        setCarregando(false);
         return;
       }
 
-      alert("Login realizado com sucesso!");
+      // Normalize o formato salvo no localStorage
+      const usuarioNormalizado = {
+        id: data.usuario?.id || data.id || null,
+        nome: data.usuario?.nome || data.nome || "Usuário",
+        email: data.usuario?.email || email,
+        token: data.token || null,
+      };
 
-      // Aqui você pode salvar token, redirecionar, etc.
-      // Exemplo:
-      // localStorage.setItem("token", dados.token);
+      localStorage.setItem("usuario", JSON.stringify(usuarioNormalizado));
 
-      setEmail("");
-      setSenha("");
+      window.location.href = "/dashboard";
 
     } catch (error) {
-      console.log(error);
-      setErro("Erro ao conectar com o servidor.");
+      alert("Erro ao conectar com o servidor.");
+      console.error(error);
     }
+
+    setCarregando(false);
   }
 
   return (
-    <AuthCard title="Login">
-      <form className="flex flex-col gap-4" onSubmit={handleLogin}>
-        
-        {erro && <p className="text-red-400 text-center">{erro}</p>}
+    <div style={styles.container}>
+      <h1 style={styles.titulo}>Login</h1>
 
-        <div className="flex flex-col">
-          <label className="text-gray-300 mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600"
-            required
-          />
-        </div>
+      <form onSubmit={handleLogin} style={styles.form}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={styles.input}
+          required
+        />
 
-        <div className="flex flex-col">
-          <label className="text-gray-300 mb-1">Senha</label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600"
-            required
-          />
-        </div>
+        <input
+          type="password"
+          placeholder="Senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          style={styles.input}
+          required
+        />
 
-        <button
-          type="submit"
-          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg"
-        >
-          Entrar
+        <button type="submit" style={styles.button} disabled={carregando}>
+          {carregando ? "Entrando..." : "Entrar"}
         </button>
       </form>
-    </AuthCard>
+    </div>
   );
 }
+
+const styles = {
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    margin: "80px auto",
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: "#f5f5f5",
+    boxShadow: "0 0 10px rgba(0,0,0,0.15)",
+    textAlign: "center",
+  },
+  titulo: {
+    marginBottom: 20,
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 15,
+  },
+  input: {
+    padding: "10px",
+    fontSize: "16px",
+  },
+  button: {
+    padding: "10px",
+    fontSize: "16px",
+    cursor: "pointer",
+    backgroundColor: "#0070f3",
+    color: "white",
+    border: "none",
+    borderRadius: 6,
+  },
+};
