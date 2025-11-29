@@ -1,7 +1,6 @@
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.hashers import make_password, check_password
 from .models import Usuario
 
 
@@ -10,52 +9,111 @@ def criar_usuario(request):
     if request.method != "POST":
         return JsonResponse({"erro": "Método não permitido"}, status=405)
 
-    body = json.loads(request.body.decode("utf-8"))
-    nome = body.get("nome")
-    email = body.get("email")
-    senha = body.get("senha")
+    dados = json.loads(request.body)
 
-    if Usuario.objects.filter(email=email).exists():
+    if Usuario.objects.filter(email=dados["email"]).exists():
         return JsonResponse({"erro": "Email já cadastrado"}, status=400)
 
     usuario = Usuario.objects.create(
-        nome=nome,
-        email=email,
-        senha=make_password(senha)
+        nome=dados["nome"],
+        email=dados["email"],
+        senha=dados["senha"],
     )
 
     return JsonResponse({
-        "mensagem": "Usuário criado com sucesso!",
-        "usuario": {
-            "id": usuario.id,
-            "nome": usuario.nome,
-            "email": usuario.email
-        }
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email": usuario.email
     })
-    
+
+
+def listar_usuarios(request):
+    if request.method != "GET":
+        return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+    usuarios = Usuario.objects.all().values("id", "nome", "email")
+    return JsonResponse(list(usuarios), safe=False)
+
+
+def detalhar_usuario(request, id):
+    if request.method != "GET":
+        return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+    try:
+        usuario = Usuario.objects.get(id=id)
+    except Usuario.DoesNotExist:
+        return JsonResponse({"erro": "Usuário não encontrado"}, status=404)
+
+    return JsonResponse({
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email": usuario.email
+    })
+
+
+@csrf_exempt
+def atualizar_usuario(request, id):
+    if request.method not in ["PUT", "POST"]:
+        return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+    try:
+        usuario = Usuario.objects.get(id=id)
+    except Usuario.DoesNotExist:
+        return JsonResponse({"erro": "Usuário não encontrado"}, status=404)
+
+    # Pega o corpo da requisição qualquer que seja o método
+    dados = json.loads(request.body)
+
+    usuario.nome = dados.get("nome", usuario.nome)
+    usuario.email = dados.get("email", usuario.email)
+
+    nova_senha = dados.get("senha", "")
+    if nova_senha != "":
+        usuario.senha = nova_senha  # atualiza apenas se enviada
+
+    usuario.save()
+
+    return JsonResponse({
+        "mensagem": "Usuário atualizado",
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email": usuario.email
+    })
+
+
 
 @csrf_exempt
 def login_usuario(request):
     if request.method != "POST":
         return JsonResponse({"erro": "Método não permitido"}, status=405)
 
-    body = json.loads(request.body.decode("utf-8"))
-    email = body.get("email")
-    senha = body.get("senha")
+    dados = json.loads(request.body)
+    email = dados.get("email")
+    senha = dados.get("senha")
 
     try:
-        usuario = Usuario.objects.get(email=email)
+        usuario = Usuario.objects.get(email=email, senha=senha)
+    except Usuario.DoesNotExist:
+        return JsonResponse({"erro": "Credenciais inválidas"}, status=400)
+
+    return JsonResponse({
+        "mensagem": "Login realizado com sucesso",
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email": usuario.email
+    })
+
+
+@csrf_exempt
+def deletar_usuario(request, id):
+    if request.method != "DELETE":
+        return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+    try:
+        usuario = Usuario.objects.get(id=id)
     except Usuario.DoesNotExist:
         return JsonResponse({"erro": "Usuário não encontrado"}, status=404)
 
-    if not check_password(senha, usuario.senha):
-        return JsonResponse({"erro": "Senha incorreta"}, status=401)
+    usuario.delete()
 
-    return JsonResponse({
-        "mensagem": "Login efetuado!",
-        "usuario": {
-            "id": usuario.id,
-            "nome": usuario.nome,
-            "email": usuario.email
-        }
-    })
+    return JsonResponse({"mensagem": "Usuário deletado com sucesso"})
