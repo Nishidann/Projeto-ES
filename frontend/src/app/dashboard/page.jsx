@@ -18,17 +18,11 @@ export default function Dashboard() {
       const usuarioLogado = JSON.parse(dados);
       setUser(usuarioLogado);
 
-      // Aqui futuramente vamos buscar jogos do backend:
-      // fetch(`http://localhost:8000/api/jogos/usuario/${usuarioLogado.id}`)
-      //   .then(res => res.json())
-      //   .then(data => setJogos(data));
-
-      // Jogos de exemplo (até integrar no backend)
-      setJogos([
-        { id: 1, nome: "The Witcher 3", status: "Publicado" },
-        { id: 2, nome: "Celeste", status: "Rascunho" },
-        { id: 3, nome: "Dark Souls", status: "Publicado" },
-      ]);
+      // Buscar todos os jogos do backend
+      fetch("http://localhost:8000/api/jogo/")
+        .then(res => res.json())
+        .then(data => setJogos(data))
+        .catch(err => console.error("Erro ao carregar jogos:", err));
 
     } catch (erro) {
       console.error("Erro ao ler usuário:", erro);
@@ -40,112 +34,56 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🎮 Bem-vindo, {user.nome}</h1>
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
+      <div className="max-w-5xl mx-auto">
 
-      <div style={styles.actions}>
-        <a href={`/usuarios/${user.id}`} style={styles.buttonBlue}>Editar Perfil</a>
-        <a href="/jogos/criar" style={styles.buttonGreen}>+ Adicionar Jogo</a>
-      </div>
+        <h1 className="text-4xl font-bold mb-6 text-center drop-shadow-lg">
+          Bem-vindo, {user.nome}
+        </h1>
 
-      <h2 style={styles.subtitle}>Seus Jogos</h2>
+        <div className="flex justify-center gap-4 mb-8">
+          <a
+            href={`/usuarios/${user.id}`}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold shadow"
+          >
+            Editar Perfil
+          </a>
+        </div>
 
-      <div style={styles.cardContainer}>
+        <h2 className="text-3xl font-semibold mb-4">Jogos Cadastrados</h2>
+
         {jogos.length === 0 ? (
-          <p style={{ fontSize: 16, opacity: 0.7 }}>Você ainda não adicionou jogos.</p>
+          <p className="text-gray-300 text-center">Nenhum jogo cadastrado.</p>
         ) : (
-          jogos.map((jogo) => (
-            <div key={jogo.id} style={styles.card}>
-              <h3 style={{ margin: 0 }}>{jogo.nome}</h3>
-              <p style={{ opacity: 0.6 }}>{jogo.status}</p>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {jogos.map(jogo => (
+              <div
+                key={jogo.id}
+                className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 shadow-md backdrop-blur-md"
+              >
+                <h3 className="text-xl font-bold">{jogo.titulo}</h3>
+                <p className="text-gray-300 mt-1">{jogo.descricao}</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Gênero: <span className="text-white">{jogo.genero}</span>
+                </p>
+                <p className="text-sm text-gray-400">
+                  Ano: <span className="text-white">{jogo.ano}</span>
+                </p>
 
-              <div style={styles.cardButtons}>
-                <a href={`/jogos/${jogo.id}`} style={styles.buttonSmall}>Ver</a>
-                <a href={`/jogos/${jogo.id}/editar`} style={styles.buttonSmallYellow}>Editar</a>
+                <div className="mt-4 flex gap-3">
+                  <a
+                    href={`/jogos/${jogo.id}`}
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold"
+                  >
+                    Ver
+                  </a>
+
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
-
-const styles = {
-  container: {
-    width: "90%",
-    maxWidth: "900px",
-    margin: "40px auto",
-    fontFamily: "Arial",
-  },
-
-  title: {
-    fontSize: "32px",
-    marginBottom: "20px",
-  },
-
-  subtitle: {
-    fontSize: "22px",
-    marginTop: "30px",
-    marginBottom: "10px",
-  },
-
-  actions: {
-    display: "flex",
-    gap: "12px",
-  },
-
-  buttonBlue: {
-    padding: "10px 14px",
-    background: "#1d4ed8",
-    color: "white",
-    borderRadius: "8px",
-    textDecoration: "none",
-  },
-
-  buttonGreen: {
-    padding: "10px 14px",
-    background: "#22c55e",
-    color: "white",
-    borderRadius: "8px",
-    textDecoration: "none",
-  },
-
-  cardContainer: {
-    marginTop: "10px",
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-    gap: "15px",
-  },
-
-  card: {
-    padding: "14px",
-    borderRadius: "10px",
-    background: "#f8f8f8",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-  },
-
-  cardButtons: {
-    marginTop: "10px",
-    display: "flex",
-    gap: "10px",
-  },
-
-  buttonSmall: {
-    padding: "6px 10px",
-    background: "#1d4ed8",
-    color: "white",
-    borderRadius: "6px",
-    textDecoration: "none",
-    fontSize: "14px",
-  },
-
-  buttonSmallYellow: {
-    padding: "6px 10px",
-    background: "#eab308",
-    color: "black",
-    borderRadius: "6px",
-    textDecoration: "none",
-    fontSize: "14px",
-  },
-};

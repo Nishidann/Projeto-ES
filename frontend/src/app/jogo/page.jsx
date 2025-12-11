@@ -15,16 +15,26 @@ export default function JogoPage() {
 
   // Carregar lista de jogos
   const carregarJogos = async () => {
-    const res = await fetch("http://localhost:8000/api/jogo/");
-    const dados = await res.json();
-    setJogos(dados);
+    try {
+      const res = await fetch("http://localhost:8000/api/jogo/");
+      if (!res.ok) throw new Error("Erro ao buscar jogos");
+      const dados = await res.json();
+      setJogos(dados);
+    } catch (erro) {
+      console.error("Erro ao carregar jogos:", erro);
+    }
   };
 
   // Carregar lista de gêneros
   const carregarGeneros = async () => {
-    const res = await fetch("http://localhost:8000/api/jogo/generos/");
-    const dados = await res.json();
-    setGeneros(dados);
+    try {
+      const res = await fetch("http://localhost:8000/api/jogo/generos/");
+      if (!res.ok) throw new Error("Erro ao buscar gêneros");
+      const dados = await res.json();
+      setGeneros(dados);
+    } catch (erro) {
+      console.error("Erro ao carregar gêneros:", erro);
+    }
   };
 
   useEffect(() => {
@@ -51,28 +61,37 @@ export default function JogoPage() {
       metodo = "PUT";
     }
 
-    await fetch(url, {
-      method: metodo,
-      headers: { "Content-Type": "application/json" },
-      body: corpo,
-    });
+    try {
+      const res = await fetch(url, {
+        method: metodo,
+        headers: { "Content-Type": "application/json" },
+        body: corpo,
+      });
+      if (!res.ok) throw new Error("Erro ao salvar jogo");
 
-    setTitulo("");
-    setDescricao("");
-    setGeneroId("");
-    setAno("");
-    setEditandoId(null);
+      setTitulo("");
+      setDescricao("");
+      setGeneroId("");
+      setAno("");
+      setEditandoId(null);
 
-    carregarJogos();
+      carregarJogos();
+    } catch (erro) {
+      console.error("Erro ao salvar jogo:", erro);
+    }
   };
 
   // Deletar jogo
   const deletarJogo = async (id) => {
-    await fetch(`http://localhost:8000/api/jogo/${id}/deletar/`, {
-      method: "DELETE",
-    });
-
-    carregarJogos();
+    try {
+      const res = await fetch(`http://localhost:8000/api/jogo/${id}/deletar/`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Erro ao deletar jogo");
+      carregarJogos();
+    } catch (erro) {
+      console.error("Erro ao deletar jogo:", erro);
+    }
   };
 
   // Carregar jogo para edição
@@ -87,7 +106,6 @@ export default function JogoPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
       <div className="max-w-3xl mx-auto">
-
         <h1 className="text-4xl font-bold text-center mb-8 drop-shadow-lg">
           {editandoId ? "Editar Jogo" : "Cadastrar Jogo"}
         </h1>
@@ -112,21 +130,19 @@ export default function JogoPage() {
             onChange={(e) => setDescricao(e.target.value)}
           />
 
-            <select
+          <select
             className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white"
             value={generoId}
             onChange={(e) => setGeneroId(e.target.value)}
             required
-            >
+          >
             <option value="">Selecione um gênero</option>
-
             {generos.map((g) => (
-                <option key={g.value} value={g.value}>
+              <option key={g.value} value={g.value}>
                 {g.label}
-                </option>
+              </option>
             ))}
-            </select>
-
+          </select>
 
           <input
             className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white"
@@ -148,24 +164,20 @@ export default function JogoPage() {
         {/* LISTA */}
         <h2 className="text-3xl font-semibold mt-10 mb-4">Jogos Cadastrados</h2>
 
-        {jogos.length === 0 ? (
-          <p className="text-gray-300">Nenhum jogo cadastrado.</p>
-        ) : (
-          <div className="space-y-4">
-            {jogos.map((jogo) => (
+        <div className="space-y-4 max-h-[400px] overflow-y-auto">
+          {jogos.length === 0 ? (
+            <p className="text-gray-300">Nenhum jogo cadastrado.</p>
+          ) : (
+            jogos.map((jogo) => (
               <div
                 key={jogo.id}
                 className="bg-gray-800/50 p-5 rounded-xl border border-gray-700 shadow-md"
               >
                 <h3 className="text-2xl font-bold">{jogo.titulo}</h3>
-
                 <p className="text-gray-300">{jogo.descricao}</p>
-
                 <p className="text-sm text-gray-400 mt-1">
-                  Gênero:{" "}
-                  <span className="text-white">{jogo.genero || "Sem gênero"}</span>
+                  Gênero: <span className="text-white">{jogo.genero || "Sem gênero"}</span>
                 </p>
-
                 <p className="text-sm text-gray-400">
                   Ano: <span className="text-white">{jogo.ano}</span>
                 </p>
@@ -177,7 +189,6 @@ export default function JogoPage() {
                   >
                     Editar
                   </button>
-
                   <button
                     onClick={() => deletarJogo(jogo.id)}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold"
@@ -186,9 +197,9 @@ export default function JogoPage() {
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </main>
   );
