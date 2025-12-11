@@ -1,18 +1,15 @@
 from django.urls import path
-from .views import (
-    criar_jogo,
-    listar_jogos,
-    detalhar_jogo,
-    atualizar_jogo,
-    deletar_jogo,
-    listar_generos,
-)
+from . import views
 
 urlpatterns = [
-    path("", listar_jogos),
-    path("criar/", criar_jogo),
-    path("<int:id>/", detalhar_jogo),
-    path("<int:id>/atualizar/", atualizar_jogo),
-    path("<int:id>/deletar/", deletar_jogo),
-    path("generos/", listar_generos),  # <--- necessário para o front
+    path("", views.listar_jogos, name="listar_jogos"),
+    path("criar/", views.criar_jogo, name="criar_jogo"),
+    path("<int:id>/", views.detalhar_jogo, name="detalhar_jogo"),
+    path("<int:id>/atualizar/", views.atualizar_jogo, name="atualizar_jogo"),
+    path("<int:id>/deletar/", views.deletar_jogo, name="deletar_jogo"),
+    path("generos/", views.listar_generos, name="listar_generos"),
+
+    # apenas endpoints relativos
+    path("<int:jogo_id>/comentarios/", views.listar_comentarios, name="listar_comentarios"),
+    path("comentarios/criar/", views.criar_comentario, name="criar_comentario"),
 ]
