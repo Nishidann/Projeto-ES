@@ -14,24 +14,32 @@ def criar_usuario(request):
     if Usuario.objects.filter(email=dados["email"]).exists():
         return JsonResponse({"erro": "Email já cadastrado"}, status=400)
 
+    # 🔐 primeiro usuário vira admin
+    is_primeiro_usuario = Usuario.objects.count() == 0
+
     usuario = Usuario.objects.create(
         nome=dados["nome"],
         email=dados["email"],
         senha=dados["senha"],
+        is_admin=is_primeiro_usuario
     )
 
     return JsonResponse({
         "id": usuario.id,
         "nome": usuario.nome,
-        "email": usuario.email
+        "email": usuario.email,
+        "is_admin": usuario.is_admin
     })
+
 
 
 def listar_usuarios(request):
     if request.method != "GET":
         return JsonResponse({"erro": "Método não permitido"}, status=405)
 
-    usuarios = Usuario.objects.all().values("id", "nome", "email")
+    usuarios = Usuario.objects.all().values(
+        "id", "nome", "email", "is_admin"
+    )
     return JsonResponse(list(usuarios), safe=False)
 
 
@@ -47,7 +55,8 @@ def detalhar_usuario(request, id):
     return JsonResponse({
         "id": usuario.id,
         "nome": usuario.nome,
-        "email": usuario.email
+        "email": usuario.email,
+        "is_admin": usuario.is_admin
     })
 
 
@@ -61,15 +70,14 @@ def atualizar_usuario(request, id):
     except Usuario.DoesNotExist:
         return JsonResponse({"erro": "Usuário não encontrado"}, status=404)
 
-    # Pega o corpo da requisição qualquer que seja o método
     dados = json.loads(request.body)
 
     usuario.nome = dados.get("nome", usuario.nome)
     usuario.email = dados.get("email", usuario.email)
 
-    nova_senha = dados.get("senha", "")
-    if nova_senha != "":
-        usuario.senha = nova_senha  # atualiza apenas se enviada
+    nova_senha = dados.get("senha")
+    if nova_senha:
+        usuario.senha = nova_senha
 
     usuario.save()
 
@@ -77,9 +85,9 @@ def atualizar_usuario(request, id):
         "mensagem": "Usuário atualizado",
         "id": usuario.id,
         "nome": usuario.nome,
-        "email": usuario.email
+        "email": usuario.email,
+        "is_admin": usuario.is_admin
     })
-
 
 
 @csrf_exempt
@@ -100,8 +108,10 @@ def login_usuario(request):
         "mensagem": "Login realizado com sucesso",
         "id": usuario.id,
         "nome": usuario.nome,
-        "email": usuario.email
+        "email": usuario.email,
+        "is_admin": usuario.is_admin  # 🔥 ISSO É O QUE FALTAVA
     })
+
 
 
 @csrf_exempt

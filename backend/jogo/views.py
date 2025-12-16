@@ -19,6 +19,15 @@ def criar_jogo(request):
         return JsonResponse({"erro": "Método não permitido"}, status=405)
 
     dados = json.loads(request.body)
+    usuario_id = dados.get("usuario_id")
+
+    try:
+        usuario = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return JsonResponse({"erro": "Usuário inválido"}, status=401)
+
+    if not usuario.is_admin:
+        return JsonResponse({"erro": "Acesso negado"}, status=403)
 
     jogo = Jogo.objects.create(
         titulo=dados.get("titulo"),
@@ -27,8 +36,10 @@ def criar_jogo(request):
         ano=dados.get("ano"),
     )
 
-    return JsonResponse({"mensagem": "Jogo criado", "id": jogo.id})
+    return JsonResponse({"mensagem": "Jogo criado", "id": jogo.id}, status=201)
 
+
+    return JsonResponse({"mensagem": "Jogo criado", "id": jogo.id})
 
 def listar_jogos(request):
     jogos = Jogo.objects.all()

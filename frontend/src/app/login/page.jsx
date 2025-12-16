@@ -27,14 +27,15 @@ export default function LoginPage() {
       }
 
       // Normalize o formato salvo no localStorage
-      const usuarioNormalizado = {
-        id: data.usuario?.id || data.id || null,
-        nome: data.usuario?.nome || data.nome || "Usuário",
-        email: data.usuario?.email || email,
-        token: data.token || null,
-      };
+        const usuarioNormalizado = {
+          id: data.id,
+          nome: data.nome,
+          email: data.email,
+          is_admin: data.is_admin, // 🔥 agora vem do backend
+        };
 
-      localStorage.setItem("usuario", JSON.stringify(usuarioNormalizado));
+        localStorage.setItem("usuario", JSON.stringify(usuarioNormalizado));
+
 
       window.location.href = "/dashboard";
 

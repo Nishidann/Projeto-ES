@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AuthCard from "../componentes/AuthCard";
 
 export default function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [usuarioCriado, setUsuarioCriado] = useState(null);
   const [erro, setErro] = useState("");
+
+  const router = useRouter();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +20,7 @@ export default function Cadastro() {
       const resposta = await fetch("http://localhost:8000/api/usuarios/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, senha })
+        body: JSON.stringify({ nome, email, senha }),
       });
 
       const dados = await resposta.json();
@@ -28,14 +30,13 @@ export default function Cadastro() {
         return;
       }
 
-      setUsuarioCriado(dados);
-
-      setNome("");
-      setEmail("");
-      setSenha("");
+      // ✅ Cadastro OK → redireciona para a tela inicial
+      router.push("/"); 
+      // se quiser ir para login, use:
+      // router.push("/login");
 
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setErro("Erro de conexão com o servidor.");
     }
   }
@@ -43,7 +44,6 @@ export default function Cadastro() {
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-900 px-4 py-16">
 
-      {/* Card de cadastro */}
       <div className="w-full max-w-lg">
         <AuthCard title="Criar Conta">
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
@@ -97,15 +97,6 @@ export default function Cadastro() {
           </form>
         </AuthCard>
       </div>
-
-      {/* Card do usuário criado */}
-      {usuarioCriado && (
-        <div className="mt-10 bg-gray-800 text-white p-6 rounded-xl shadow-lg w-full max-w-lg">
-          <h3 className="text-xl font-bold mb-4">Usuário Criado ✔</h3>
-          <p><strong>Nome:</strong> {usuarioCriado.nome}</p>
-          <p><strong>Email:</strong> {usuarioCriado.email}</p>
-        </div>
-      )}
 
     </div>
   );
