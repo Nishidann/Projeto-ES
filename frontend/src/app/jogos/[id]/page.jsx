@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 
-// Componente para mostrar estrelas de avaliação
+// Componente de estrelas
 function Estrelas({ nota, setNota, readOnly = false }) {
   const total = 5;
+
   return (
     <div className="flex gap-1">
       {[...Array(total)].map((_, i) => (
@@ -14,7 +15,9 @@ function Estrelas({ nota, setNota, readOnly = false }) {
           type="button"
           disabled={readOnly}
           onClick={() => !readOnly && setNota(i + 1)}
-          className={`text-2xl ${i < nota ? "text-yellow-400" : "text-gray-500"} hover:text-yellow-300`}
+          className={`text-2xl ${
+            i < nota ? "text-yellow-400" : "text-gray-500"
+          }`}
         >
           ★
         </button>
@@ -30,42 +33,43 @@ export default function JogoDetalhe() {
   const [novoComentario, setNovoComentario] = useState("");
   const [nota, setNota] = useState(5);
 
-  const usuarioLogado = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("usuario")) : null;
+  const usuarioLogado =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("usuario"))
+      : null;
 
-  // Buscar dados do jogo
   useEffect(() => {
     const fetchJogo = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/jogo/${id}/`);
-        if (!res.ok) throw new Error("Erro ao buscar jogo");
-        const data = await res.json();
-        setJogo(data);
-      } catch (err) {
-        console.error(err);
-      }
+      const res = await fetch(`http://localhost:8000/api/jogo/${id}/`);
+      const data = await res.json();
+      setJogo(data);
     };
 
     const fetchComentarios = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/jogo/${id}/comentarios/`);
-        if (!res.ok) throw new Error("Erro ao buscar comentários");
-        const data = await res.json();
-        setComentarios(data);
-      } catch (err) {
-        console.error(err);
-      }
+      const res = await fetch(
+        `http://localhost:8000/api/jogo/${id}/comentarios/`
+      );
+      const data = await res.json();
+      setComentarios(data);
     };
 
     fetchJogo();
     fetchComentarios();
   }, [id]);
 
-  // Enviar comentário para o backend
+  // 🔹 cálculo correto da média
+  const mediaNota = useMemo(() => {
+    if (comentarios.length === 0) return null;
+    const soma = comentarios.reduce((acc, c) => acc + c.nota, 0);
+    return (soma / comentarios.length).toFixed(1);
+  }, [comentarios]);
+
   const enviarComentario = async () => {
     if (!novoComentario || !usuarioLogado) return;
 
-    try {
-      const res = await fetch("http://localhost:8000/api/jogo/comentarios/criar/", {
+    const res = await fetch(
+      "http://localhost:8000/api/jogo/comentarios/criar/",
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,17 +78,14 @@ export default function JogoDetalhe() {
           texto: novoComentario,
           nota,
         }),
-      });
+      }
+    );
 
-      if (!res.ok) throw new Error("Erro ao enviar comentário");
-      const data = await res.json();
+    const data = await res.json();
 
-      setComentarios([...comentarios, data]);
-      setNovoComentario("");
-      setNota(5);
-    } catch (err) {
-      console.error(err);
-    }
+    setComentarios([...comentarios, data]);
+    setNovoComentario("");
+    setNota(5);
   };
 
   if (!jogo) return <p className="text-white p-8">Carregando...</p>;
@@ -92,36 +93,56 @@ export default function JogoDetalhe() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
       <div className="max-w-3xl mx-auto space-y-6">
+        <a
+          href="/dashboard"
+          className="inline-block mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold"
+        >
+          ← Voltar para Dashboard
+        </a>
 
-<a
-  href="/dashboard"
-  className="inline-block mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold"
->
-  ← Voltar para Dashboard
-</a>
-
-        {/* Info do jogo */}
-        <h1 className="text-4xl font-bold drop-shadow-lg">{jogo.titulo}</h1>
+        <h1 className="text-4xl font-bold">{jogo.titulo}</h1>
         <p className="text-gray-300">{jogo.descricao}</p>
-        <p className="text-sm text-gray-400">Gênero: <span className="text-white">{jogo.genero}</span></p>
-        <p className="text-sm text-gray-400">Ano: <span className="text-white">{jogo.ano}</span></p>
+
+        <p className="text-sm text-gray-400">
+          Gênero: <span className="text-white">{jogo.genero}</span>
+        </p>
+        <p className="text-sm text-gray-400">
+          Ano: <span className="text-white">{jogo.ano}</span>
+        </p>
+
+        {/* ⭐ Média de avaliação */}
+        {mediaNota ? (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Avaliação média:</span>
+            <Estrelas nota={Math.round(mediaNota)} readOnly />
+            <span className="text-gray-300">
+              ({mediaNota}/5 · {comentarios.length} avaliações)
+            </span>
+          </div>
+        ) : (
+          <p className="text-gray-400">Ainda sem avaliações</p>
+        )}
 
         {/* Formulário de comentário */}
         {usuarioLogado && (
-          <div className="bg-gray-800 p-4 rounded-xl shadow-md">
-            <h2 className="text-2xl font-semibold mb-2">Deixe seu comentário</h2>
+          <div className="bg-gray-800 p-4 rounded-xl">
+            <h2 className="text-2xl font-semibold mb-2">
+              Deixe seu comentário
+            </h2>
+
             <textarea
-              className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white"
+              className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
               placeholder="Escreva seu comentário..."
               value={novoComentario}
               onChange={(e) => setNovoComentario(e.target.value)}
             />
+
             <div className="flex items-center gap-4 mt-2">
               <label className="font-semibold">Nota:</label>
               <Estrelas nota={nota} setNota={setNota} />
               <button
                 onClick={enviarComentario}
-                className="ml-auto bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold"
+                className="ml-auto bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 Enviar
               </button>
@@ -129,23 +150,24 @@ export default function JogoDetalhe() {
           </div>
         )}
 
-        {/* Lista de comentários */}
+        {/* Comentários */}
         {comentarios.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Comentários</h2>
+
             {comentarios.map((c) => (
-              <div key={c.id} className="bg-gray-800 p-4 rounded-xl shadow-sm">
-                <p className="text-white font-semibold">{c.usuario}</p>
+              <div
+                key={c.id}
+                className="bg-gray-800 p-4 rounded-xl"
+              >
+                <p className="font-semibold">{c.usuario}</p>
                 <p className="text-gray-300">{c.texto}</p>
-                <div className="mt-1">
-                  <Estrelas nota={c.nota} setNota={() => {}} readOnly />
-                </div>
-                <p className="text-sm text-gray-400 mt-1">{c.criado_em}</p>
+                <Estrelas nota={c.nota} readOnly />
+                <p className="text-sm text-gray-400">{c.criado_em}</p>
               </div>
             ))}
           </div>
         )}
-
       </div>
     </main>
   );
