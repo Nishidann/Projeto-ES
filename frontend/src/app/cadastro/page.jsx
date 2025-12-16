@@ -1,103 +1,131 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import AuthCard from "../componentes/AuthCard";
+import { User, Mail, Lock, UserPlus, ArrowLeft } from "lucide-react";
 
-export default function Cadastro() {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
+export default function CadastroUsuario() {
+  const [form, setForm] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+  });
 
-  const router = useRouter();
+  const [carregando, setCarregando] = useState(false);
+
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setErro("");
+    setCarregando(true);
 
     try {
-      const resposta = await fetch("http://localhost:8000/api/usuarios/", {
+      await fetch("http://localhost:3001/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, senha }),
+        body: JSON.stringify(form),
       });
 
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        setErro(dados.erro || "Erro ao criar usuário");
-        return;
-      }
-
-      // ✅ Cadastro OK → redireciona para a tela inicial
-      router.push("/"); 
-      // se quiser ir para login, use:
-      // router.push("/login");
-
-    } catch (error) {
-      console.error(error);
-      setErro("Erro de conexão com o servidor.");
+      alert("Usuário criado com sucesso!");
+      window.location.href = "/login";
+    } catch (err) {
+      alert("Erro ao criar usuário");
     }
+
+    setCarregando(false);
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-900 px-4 py-16">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div className="w-full max-w-md bg-slate-800/90 backdrop-blur border border-slate-700 rounded-2xl shadow-xl p-8">
 
-      <div className="w-full max-w-lg">
-        <AuthCard title="Criar Conta">
-          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+        {/* TÍTULO */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">🎮 GameHub</h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Crie sua conta
+          </p>
+        </div>
 
-            {erro && (
-              <p className="text-red-400 text-center">{erro}</p>
-            )}
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          
+          {/* NOME */}
+          <div className="relative">
+            <User size={18} className="absolute left-3 top-3.5 text-slate-400" />
+            <input
+              name="nome"
+              placeholder="Nome"
+              value={form.nome}
+              onChange={handleChange}
+              required
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-700 border border-slate-600 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label className="text-gray-300 mb-1">Nome</label>
-              <input
-                type="text"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-                placeholder="Seu nome"
-                required
-              />
-            </div>
+          {/* EMAIL */}
+          <div className="relative">
+            <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-700 border border-slate-600 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label className="text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-                placeholder="Seu email"
-                required
-              />
-            </div>
+          {/* SENHA */}
+          <div className="relative">
+            <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
+            <input
+              name="senha"
+              type="password"
+              placeholder="Senha"
+              value={form.senha}
+              onChange={handleChange}
+              required
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-700 border border-slate-600 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label className="text-gray-300 mb-1">Senha</label>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-                placeholder="Crie uma senha"
-                required
-              />
-            </div>
+          {/* BOTÃO */}
+          <button
+            type="submit"
+            disabled={carregando}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-semibold transition disabled:opacity-60"
+          >
+            <UserPlus size={18} />
+            {carregando ? "Criando..." : "Criar conta"}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition"
-            >
-              Criar Conta
-            </button>
-          </form>
-        </AuthCard>
+        {/* LINKS */}
+        <div className="mt-6 flex flex-col gap-3">
+          <a
+            href="/login"
+            className="flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition text-sm"
+          >
+            <ArrowLeft size={16} />
+            Já tenho conta
+          </a>
+
+          <a
+            href="/"
+            className="text-center text-sm text-slate-400 hover:text-white transition"
+          >
+            Voltar para o início
+          </a>
+        </div>
+
+        {/* FOOTER */}
+        <div className="text-center mt-6 text-sm text-slate-500">
+          © {new Date().getFullYear()} GameHub
+        </div>
       </div>
-
-    </div>
+    </main>
   );
 }

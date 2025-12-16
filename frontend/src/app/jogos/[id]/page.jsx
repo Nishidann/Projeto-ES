@@ -2,29 +2,54 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
+import { Star } from "lucide-react";
 
-// Componente de estrelas
+// ⭐ Estrelas
 function Estrelas({ nota, setNota, readOnly = false }) {
-  const total = 5;
+  const [hover, setHover] = useState(null);
 
   return (
-    <div className="flex gap-1">
-      {[...Array(total)].map((_, i) => (
-        <button
-          key={i}
-          type="button"
-          disabled={readOnly}
-          onClick={() => !readOnly && setNota(i + 1)}
-          className={`text-2xl ${
-            i < nota ? "text-yellow-400" : "text-gray-500"
-          }`}
-        >
-          ★
-        </button>
-      ))}
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => {
+        const valor = i + 1;
+        const ativa =
+          hover !== null ? valor <= hover : valor <= nota;
+
+        return (
+          <button
+            key={i}
+            type="button"
+            disabled={readOnly}
+            onClick={() => !readOnly && setNota(valor)}
+            onMouseEnter={() => !readOnly && setHover(valor)}
+            onMouseLeave={() => !readOnly && setHover(null)}
+            className={`
+              p-1 rounded-md transition
+              ${readOnly ? "cursor-default" : "cursor-pointer hover:bg-slate-700"}
+            `}
+            aria-label={`Nota ${valor}`}
+          >
+            <Star
+              size={20}
+              className={
+                ativa
+                  ? "fill-yellow-400 text-yellow-400 transition"
+                  : "text-slate-500 transition"
+              }
+            />
+          </button>
+        );
+      })}
+
+      {!readOnly && (
+        <span className="ml-2 text-sm text-slate-400">
+          {hover ?? nota}/5
+        </span>
+      )}
     </div>
   );
 }
+
 
 export default function JogoDetalhe() {
   const { id } = useParams();
@@ -39,28 +64,18 @@ export default function JogoDetalhe() {
       : null;
 
   useEffect(() => {
-    const fetchJogo = async () => {
-      const res = await fetch(`http://localhost:8000/api/jogo/${id}/`);
-      const data = await res.json();
-      setJogo(data);
-    };
+    fetch(`http://localhost:8000/api/jogo/${id}/`)
+      .then((r) => r.json())
+      .then(setJogo);
 
-    const fetchComentarios = async () => {
-      const res = await fetch(
-        `http://localhost:8000/api/jogo/${id}/comentarios/`
-      );
-      const data = await res.json();
-      setComentarios(data);
-    };
-
-    fetchJogo();
-    fetchComentarios();
+    fetch(`http://localhost:8000/api/jogo/${id}/comentarios/`)
+      .then((r) => r.json())
+      .then(setComentarios);
   }, [id]);
 
-  // 🔹 cálculo correto da média
   const mediaNota = useMemo(() => {
-    if (comentarios.length === 0) return null;
-    const soma = comentarios.reduce((acc, c) => acc + c.nota, 0);
+    if (!comentarios.length) return null;
+    const soma = comentarios.reduce((a, c) => a + c.nota, 0);
     return (soma / comentarios.length).toFixed(1);
   }, [comentarios]);
 
@@ -82,67 +97,88 @@ export default function JogoDetalhe() {
     );
 
     const data = await res.json();
-
     setComentarios([...comentarios, data]);
     setNovoComentario("");
     setNota(5);
   };
 
-  if (!jogo) return <p className="text-white p-8">Carregando...</p>;
+  if (!jogo)
+    return <p className="text-white p-8">Carregando...</p>;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <section className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+        {/* Voltar */}
         <a
           href="/dashboard"
-          className="inline-block mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold"
+          className="inline-block px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition font-semibold"
         >
-          ← Voltar para Dashboard
+          ← Voltar ao Dashboard
         </a>
 
-        <h1 className="text-4xl font-bold">{jogo.titulo}</h1>
-        <p className="text-gray-300">{jogo.descricao}</p>
+        {/* Card do jogo */}
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
+          <h1 className="text-4xl font-bold">{jogo.titulo}</h1>
 
-        <p className="text-sm text-gray-400">
-          Gênero: <span className="text-white">{jogo.genero}</span>
-        </p>
-        <p className="text-sm text-gray-400">
-          Ano: <span className="text-white">{jogo.ano}</span>
-        </p>
+          <p className="text-slate-300 leading-relaxed">
+            {jogo.descricao}
+          </p>
 
-        {/* ⭐ Média de avaliação */}
-        {mediaNota ? (
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Avaliação média:</span>
-            <Estrelas nota={Math.round(mediaNota)} readOnly />
-            <span className="text-gray-300">
-              ({mediaNota}/5 · {comentarios.length} avaliações)
+          <div className="flex gap-6 text-sm text-slate-400">
+            <span>
+              Gênero:{" "}
+              <span className="text-white font-semibold">
+                {jogo.genero}
+              </span>
+            </span>
+            <span>
+              Ano:{" "}
+              <span className="text-white font-semibold">
+                {jogo.ano}
+              </span>
             </span>
           </div>
-        ) : (
-          <p className="text-gray-400">Ainda sem avaliações</p>
-        )}
 
-        {/* Formulário de comentário */}
+          {/* Média */}
+          {mediaNota ? (
+            <div className="flex items-center gap-3">
+              <Estrelas
+                nota={Math.round(mediaNota)}
+                readOnly
+              />
+              <span className="text-slate-300 text-sm">
+                {mediaNota}/5 · {comentarios.length} avaliações
+              </span>
+            </div>
+          ) : (
+            <p className="text-slate-500">
+              Sem avaliações ainda
+            </p>
+          )}
+        </div>
+
+        {/* Comentário */}
         {usuarioLogado && (
-          <div className="bg-gray-800 p-4 rounded-xl">
-            <h2 className="text-2xl font-semibold mb-2">
-              Deixe seu comentário
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
+            <h2 className="text-2xl font-semibold">
+              Deixe sua avaliação
             </h2>
 
             <textarea
-              className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
+              className="w-full p-4 rounded-lg bg-slate-900 border border-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Escreva seu comentário..."
               value={novoComentario}
-              onChange={(e) => setNovoComentario(e.target.value)}
+              onChange={(e) =>
+                setNovoComentario(e.target.value)
+              }
             />
 
-            <div className="flex items-center gap-4 mt-2">
-              <label className="font-semibold">Nota:</label>
+            <div className="flex items-center gap-4">
               <Estrelas nota={nota} setNota={setNota} />
+
               <button
                 onClick={enviarComentario}
-                className="ml-auto bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="ml-auto px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-semibold transition"
               >
                 Enviar
               </button>
@@ -153,22 +189,28 @@ export default function JogoDetalhe() {
         {/* Comentários */}
         {comentarios.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Comentários</h2>
+            <h2 className="text-2xl font-semibold">
+              Comentários
+            </h2>
 
             {comentarios.map((c) => (
               <div
                 key={c.id}
-                className="bg-gray-800 p-4 rounded-xl"
+                className="bg-slate-800 border border-slate-700 rounded-xl p-4"
               >
                 <p className="font-semibold">{c.usuario}</p>
-                <p className="text-gray-300">{c.texto}</p>
+                <p className="text-slate-300">
+                  {c.texto}
+                </p>
                 <Estrelas nota={c.nota} readOnly />
-                <p className="text-sm text-gray-400">{c.criado_em}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {c.criado_em}
+                </p>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

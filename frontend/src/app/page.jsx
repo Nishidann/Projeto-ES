@@ -1,33 +1,62 @@
 import Link from "next/link";
+import { Star, Gamepad2, Users } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="text-center p-8">
-        <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-lg">
-          GameRate
+    <main className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+      
+      <div className="max-w-4xl w-full px-6 text-center">
+
+        {/* TÍTULO */}
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
+          🎮 GameRate
         </h1>
 
-        <p className="text-gray-300 mt-4 text-lg">
-          Cadastre e avalie seus jogos favoritos 🎮
+        {/* SUBTÍTULO */}
+        <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">
+          Cadastre, avalie e descubra jogos de forma simples, rápida e organizada.
         </p>
 
-        {/* Botões */}
-        <div className="mt-8 flex gap-4 justify-center">
+        {/* BENEFÍCIOS */}
+        <div className="mt-10 flex flex-col md:flex-row justify-center gap-6 text-slate-300">
+          <div className="flex items-center gap-3">
+            <Gamepad2 className="text-indigo-400" />
+            Organize seus jogos
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Star className="text-yellow-400" />
+            Avalie com notas e comentários
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Users className="text-sky-400" />
+            Veja avaliações da comunidade
+          </div>
+        </div>
+
+        {/* BOTÕES */}
+        <div className="mt-12 flex justify-center gap-4">
           <Link
             href="/cadastro"
-            className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition"
+            className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold transition"
           >
-            Cadastro
+            Criar conta
           </Link>
 
           <Link
             href="/login"
-            className="px-6 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold shadow-md transition"
+            className="px-8 py-4 rounded-xl bg-slate-700 hover:bg-slate-600 font-semibold transition"
           >
-            Login
+            Entrar
           </Link>
         </div>
+
+        {/* FOOTER */}
+        <p className="mt-14 text-xs text-slate-500">
+          © {new Date().getFullYear()} GameRate
+        </p>
+
       </div>
     </main>
   );

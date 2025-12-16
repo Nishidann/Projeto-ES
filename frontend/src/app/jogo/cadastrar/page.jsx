@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowLeft, Save, Pencil, Trash2 } from "lucide-react";
 
 export default function JogoCadastrarPage() {
   const [jogos, setJogos] = useState([]);
@@ -14,9 +15,6 @@ export default function JogoCadastrarPage() {
   const [editandoId, setEditandoId] = useState(null);
   const [user, setUser] = useState(null);
 
-  /* =========================
-     AUTENTICAÇÃO / ADMIN
-  ========================== */
   useEffect(() => {
     const dados = localStorage.getItem("usuario");
 
@@ -38,32 +36,18 @@ export default function JogoCadastrarPage() {
     carregarGeneros();
   }, []);
 
-  /* =========================
-     API
-  ========================== */
   const carregarJogos = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/api/jogo/");
-      const dados = await res.json();
-      setJogos(dados);
-    } catch (erro) {
-      console.error("Erro ao carregar jogos:", erro);
-    }
+    const res = await fetch("http://localhost:8000/api/jogo/");
+    const dados = await res.json();
+    setJogos(dados);
   };
 
   const carregarGeneros = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/api/jogo/generos/");
-      const dados = await res.json();
-      setGeneros(dados);
-    } catch (erro) {
-      console.error("Erro ao carregar gêneros:", erro);
-    }
+    const res = await fetch("http://localhost:8000/api/jogo/generos/");
+    const dados = await res.json();
+    setGeneros(dados);
   };
 
-  /* =========================
-     CRIAR / EDITAR
-  ========================== */
   const salvarJogo = async (e) => {
     e.preventDefault();
 
@@ -72,7 +56,7 @@ export default function JogoCadastrarPage() {
       descricao,
       genero: generoId,
       ano: parseInt(ano),
-      usuario_id: user.id, // 🔐 importante
+      usuario_id: user.id,
     };
 
     let url = "http://localhost:8000/api/jogo/criar/";
@@ -83,40 +67,26 @@ export default function JogoCadastrarPage() {
       metodo = "PUT";
     }
 
-    try {
-      const res = await fetch(url, {
-        method: metodo,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(corpo),
-      });
+    await fetch(url, {
+      method: metodo,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo),
+    });
 
-      if (!res.ok) throw new Error("Erro ao salvar jogo");
-
-      limparFormulario();
-      carregarJogos();
-    } catch (erro) {
-      console.error("Erro ao salvar jogo:", erro);
-    }
+    limparFormulario();
+    carregarJogos();
   };
 
   const deletarJogo = async (id) => {
-    if (!confirm("Tem certeza que deseja deletar este jogo?")) return;
+    if (!confirm("Deseja deletar este jogo?")) return;
 
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/jogo/${id}/deletar/`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuario_id: user.id }),
-        }
-      );
+    await fetch(`http://localhost:8000/api/jogo/${id}/deletar/`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario_id: user.id }),
+    });
 
-      if (!res.ok) throw new Error("Erro ao deletar jogo");
-      carregarJogos();
-    } catch (erro) {
-      console.error("Erro ao deletar jogo:", erro);
-    }
+    carregarJogos();
   };
 
   const editar = (jogo) => {
@@ -137,114 +107,110 @@ export default function JogoCadastrarPage() {
 
   if (!user) return null;
 
-  /* =========================
-     UI
-  ========================== */
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
-      <div className="max-w-3xl mx-auto">
-
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <section className="max-w-6xl mx-auto px-6 py-10">
         <a
           href="/dashboard"
-          className="inline-block mb-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold"
+          className="inline-flex items-center gap-2 mb-6 text-slate-300 hover:text-white"
         >
-          ← Voltar para Dashboard
+          <ArrowLeft size={18} /> Voltar ao Dashboard
         </a>
 
-        <h1 className="text-4xl font-bold text-center mb-8">
-          {editandoId ? "Editar Jogo" : "Cadastrar Jogo"}
+        <h1 className="text-3xl font-bold mb-8">
+          {editandoId ? "Editar Jogo" : "Cadastrar Novo Jogo"}
         </h1>
 
         {/* FORM */}
         <form
           onSubmit={salvarJogo}
-          className="bg-gray-800/60 p-6 rounded-xl space-y-4 border border-gray-700"
+          className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4"
         >
           <input
-            className="w-full p-3 rounded bg-gray-900 border border-gray-700"
-            placeholder="Título"
+            className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Título do jogo"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             required
           />
 
           <textarea
-            className="w-full p-3 rounded bg-gray-900 border border-gray-700"
+            className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="Descrição"
+            rows={4}
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
           />
 
-          <select
-            className="w-full p-3 rounded bg-gray-900 border border-gray-700"
-            value={generoId}
-            onChange={(e) => setGeneroId(e.target.value)}
-            required
-          >
-            <option value="">Selecione um gênero</option>
-            {generos.map((g) => (
-              <option key={g.value} value={g.value}>
-                {g.label}
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <select
+              className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+              value={generoId}
+              onChange={(e) => setGeneroId(e.target.value)}
+              required
+            >
+              <option value="">Selecione um gênero</option>
+              {generos.map((g) => (
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
 
-          <input
-            type="number"
-            className="w-full p-3 rounded bg-gray-900 border border-gray-700"
-            placeholder="Ano"
-            value={ano}
-            onChange={(e) => setAno(e.target.value)}
-            required
-          />
+            <input
+              type="number"
+              className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Ano"
+              value={ano}
+              onChange={(e) => setAno(e.target.value)}
+              required
+            />
+          </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-semibold"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-semibold transition"
           >
-            {editandoId ? "Salvar Alterações" : "Cadastrar"}
+            <Save size={18} /> {editandoId ? "Salvar Alterações" : "Cadastrar Jogo"}
           </button>
         </form>
 
         {/* LISTA */}
-        <h2 className="text-3xl font-semibold mt-10 mb-4">
-          Jogos Cadastrados
-        </h2>
+        <h2 className="text-2xl font-semibold mt-12 mb-4">Jogos Cadastrados</h2>
 
         <div className="space-y-4">
           {jogos.map((jogo) => (
             <div
               key={jogo.id}
-              className="bg-gray-800 p-5 rounded-xl border border-gray-700"
+              className="bg-slate-800 border border-slate-700 rounded-xl p-5"
             >
-              <h3 className="text-2xl font-bold">{jogo.titulo}</h3>
-              <p className="text-gray-300">{jogo.descricao}</p>
-              <p className="text-sm text-gray-400">
-                Gênero: <span className="text-white">{jogo.genero}</span>
-              </p>
-              <p className="text-sm text-gray-400">
-                Ano: <span className="text-white">{jogo.ano}</span>
-              </p>
+              <h3 className="text-xl font-bold">{jogo.titulo}</h3>
+              <p className="text-slate-400 text-sm mt-1">{jogo.descricao}</p>
+
+              <div className="mt-2 text-sm text-slate-400">
+                <span>Gênero: <span className="text-white">{jogo.genero}</span></span> •{' '}
+                <span>Ano: <span className="text-white">{jogo.ano}</span></span>
+              </div>
 
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={() => editar(jogo)}
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
                 >
-                  Editar
+                  <Pencil size={16} /> Editar
                 </button>
+
                 <button
                   onClick={() => deletarJogo(jogo.id)}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 font-semibold"
                 >
-                  Deletar
+                  <Trash2 size={16} /> Deletar
                 </button>
               </div>
             </div>
           ))}
         </div>
-
-      </div>
+      </section>
     </main>
   );
 }
