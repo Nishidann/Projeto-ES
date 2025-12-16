@@ -86,11 +86,21 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
+    
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 text-white">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold mb-6 text-center">
           Bem-vindo, {user.nome}
         </h1>
+
+        {user.is_admin && (
+          <a
+            href="/jogo/cadastrar"
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold"
+          >
+            + Cadastrar Jogo
+          </a>
+        )}
 
         {/* ✅ BOTÃO DE PERFIL (MANTIDO) */}
         <div className="flex justify-center gap-4 mb-8">
